@@ -1,14 +1,13 @@
+#![allow(unused)]
+#![allow(non_snake_case)]
+
+
 mod dircontrol;
 mod teleport;
+mod db;
+mod config;
 
 fn main(){
-    let args = std::env::args();
-    if args.count() == 1 {
-        println!("Navigation is not complete yet ...");
-    }
-
-    else {
-        teleport::main();
-    }
+    teleport::main();
 
 }   
