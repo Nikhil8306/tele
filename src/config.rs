@@ -19,3 +19,4 @@ pub fn dataDir() -> Result<PathBuf, String> {
     Ok(dirPath)
 
 }
+

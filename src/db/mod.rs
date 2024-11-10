@@ -1,12 +1,17 @@
-// Database to store key value pair
+// Database to store key value Atomic
 
 use std::{env, path::PathBuf, fs};
-use crate::config::dataDir;
+use crate::config::{self, dataDir};
+
+pub mod create;
+pub mod delete;
+pub mod read;
+
 
 #[derive(Debug)]
 pub enum Type{ 
-    Pair,
-    File
+    Atomic,
+    Composite
 }
 
 #[derive(Debug)]
@@ -17,10 +22,8 @@ pub struct DB{
 } 
 
 impl DB {
-    pub fn new(name: &str, storageType: Type) -> Result<Self, String> {
-        if isInvalidName(name) {
-            return Err(String::from("Invalid DB name"));
-        }
+    pub fn new(name: &str, storageType:Type) -> Result<Self, String> {
+
         let mut dbPath = dataDir()?;
 
         let files = dbPath.read_dir().map_err(|_| String::from("Error reading the DB directory"))?;
@@ -36,17 +39,12 @@ impl DB {
         dbPath.push(name);
         
         match &storageType {
-            Type::Pair => {
-                let created = fs::File::create(&dbPath);
-                if created.is_err() {
-                    return Err(String::from("Error creating the DB"));
-                }
+            Type::Atomic => {
+                fs::File::create(&dbPath).map_err(|_| String::from("Error creating DB"))?;
             },
-            Type::File => {
-                let created = fs::create_dir(&dbPath);
-                if created.is_err() {
-                    return Err(String::from("Error creating the DB"));
-                }
+            Type::Composite => {
+                let dir = fs::create_dir(&dbPath).map_err(|_| String::from("Error creating DB"))?;
+                
             }
         }
 
@@ -58,11 +56,61 @@ impl DB {
         
     }
 
+    pub fn open(name: &str) -> Result<Self, String> {
+        let mut dbDir = config::dataDir()?;
+
+        dbDir.push(name);
+
+        if !dbDir.exists() {
+            return Err(String::from("DB doesn't exist"));
+        }
+
+        let storageType = match dbDir.as_path().is_file() {
+            true => {
+                let file = fs::File::open(&dbDir).map_err(|_| String::from("Error opening DB"))?;
+                Type::Atomic
+            },
+            false => {
+                let dir = fs::read_dir(&dbDir).map_err(|_| String::from("Error opening DB"))?;
+
+                Type::Composite
+            }
+        };
+
+        return Ok(Self {
+            name: name.to_string(), 
+            path:dbDir,
+            storageType,
+        });
+    }
+
+
+
+    // 
+    const EXCLUDEDCHARS: [char;2] = ['\n', '\r'];
+    fn isValidKey(&self, key: &str) -> Result<(), String>{
+        
+        if key.contains(Self::EXCLUDEDCHARS){
+            return Err(String::from("The key contains invalid characters "));
+        }
+
+        Ok(())       
+    }
+    
+    fn isValidValue(&self, key: &str) -> Result<(), String> {
+
+        if let Type::Atomic = self.storageType {
+            
+            if key.contains(Self::EXCLUDEDCHARS){
+                return Err(String::from("Value contains invalid characters"));
+            }
+
+        }
+
+        Ok(())
+
+    }
 
 }
 
 
-fn isInvalidName(name:&str) -> bool {
-    return false;
-    todo!();
-}
