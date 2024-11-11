@@ -1,5 +1,5 @@
 use crate::db::{DB, Type};
-use std::{path::PathBuf, fs};
+use std::{collections::HashMap, fs, hash::Hash, path::PathBuf};
 
 impl DB {
     pub fn get(&self, key: &str) -> Result<Option<String>, String> {
@@ -18,7 +18,33 @@ impl DB {
 
 
         Ok(value)
-        
+    }
+
+    pub fn getDB(&self) -> Result<HashMap<String, String>, String> {
+
+        match self.storageType {
+            Type::Atomic => {
+
+                let file = fs::read_to_string(&self.path).map_err(|_| String::from("Error reading DB"))?;
+
+                let lines:Vec<&str> = file.split("\n").into_iter().collect();
+                let mut ind = 0;
+
+                let mut map: HashMap<String, String> = HashMap::new();
+
+                while ind < lines.len()-1 {
+                    map.insert(lines[ind].to_string(), lines[ind+1].to_string());
+
+                    ind += 2;
+                }   
+
+                Ok(map)
+            },  
+
+            Type::Composite => {
+                todo!();
+            }
+        }
 
     }
 
