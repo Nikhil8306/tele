@@ -17,17 +17,19 @@ use crate::cli::CLI;
 fn main(){
     // todo: Need Some error pass instead of string
 
-    // let args = env::args();
-    // let args: Vec<String> = args.into_iter().collect();
+    let args = env::args();
+    let args: Vec<String> = args.into_iter().collect();
 
-    
-    // let cli = CLI::new(args).unwrap();
+    if args.len() == 1 {
+        dircontrol::main();
+    }
+    else {
+        let cli = CLI::new(args).unwrap();
 
-    // let res = cli.run();
+        let res = cli.run();
 
-    // if res.is_err() {
-    //     println!("{}", res.unwrap_err());
-    // }
-
-    dircontrol::main();
+        if res.is_err() {
+            println!("{}", res.unwrap_err());
+        }
+    }
 }   
