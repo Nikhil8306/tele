@@ -6,7 +6,6 @@ pub enum Command {
     Up,
     Down,
     Return,
-    Delete,
     Query(Vec<u8>)
 }
 
@@ -50,8 +49,7 @@ impl Input {
         }
 
         if inpBuffer[0] == 127 {
-            self.clearBuffer();
-            return Some(Command::Delete);
+            self.buffer.pop();
         }
         
 

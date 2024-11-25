@@ -5,14 +5,14 @@ use std::write;
 use super::dir::Dir;
 
 pub struct Screen {
-    buffer: Vec<(String, bool)>,
+    buffer: Vec<(String, usize, bool)>,
     cursorPos: usize,
     output:Stdout
 }
 
 impl Screen {
     // associate functions
-    pub fn new(buffer: &Vec<(String, bool)>) -> Self {
+    pub fn new(buffer: &Vec<(String, usize, bool)>) -> Self {
         let mut newScreen = Self {
             buffer: buffer.clone(),
             cursorPos:0,
@@ -28,7 +28,7 @@ impl Screen {
 
 impl Screen {
     // methods
-    pub fn reset(&mut self, buffer: Vec<(String, bool)>) {
+    pub fn reset(&mut self, buffer: Vec<(String, usize, bool)>) {
 
         self.clearScreenBuffer();
         self.cursorPos = 0;
@@ -57,13 +57,13 @@ impl Screen {
         self.render();
     }
 
-    pub fn getCursorPos(&self) -> usize {
-        return self.cursorPos;
+    pub fn getDirPos(&self) -> usize {
+        return self.buffer[self.cursorPos].1;
     }
 
     pub fn render(&mut self) {
         let mut ind = 0;
-        for (dir, isDir) in &(self.buffer) {
+        for (dir, _,isDir) in &(self.buffer) {
             if *isDir {
                 execute!(self.output, SetForegroundColor(Color::Blue));
             }
@@ -75,7 +75,6 @@ impl Screen {
             if *isDir {
                 execute!(self.output, SetForegroundColor(Color::Reset));
             }
-
             ind += 1;
         }
     }
