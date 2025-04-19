@@ -23,18 +23,23 @@ impl Dir {
         let readDir = path.read_dir().map_err(|_| ())?;
         let mut dirs: Vec<(String, usize, bool)> = vec![];
 
-        let mut indx  = 1;
         for readDir in readDir {
             let currDir = readDir.map_err(|_| ())?;
             let fileName = currDir.file_name().into_string().map_err(|_| ())?;
             let mut dirPath = path.clone();
             dirPath.push(&fileName);
-            dirs.push((fileName, indx, dirPath.is_dir()));
-            indx += 1;
+            dirs.push((fileName, 0, dirPath.is_dir()));
         }
         
-        // dirs.sort();
+        dirs.sort();
         dirs.insert(0, (String::from("../"), 0, false));
+        let mut ind = 0;
+        for dir in &mut dirs{
+            dir.1 = ind;
+
+            ind += 1;
+        }
+        
 
         Ok(dirs)
     }

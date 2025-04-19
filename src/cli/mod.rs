@@ -4,6 +4,7 @@ use std::fs;
 use std::process::Command;
 use std::path::{self, PathBuf};
 use std::str::FromStr;
+use std::collections::HashMap;
 use crate::db::{self, DB, Type};
 use crate::constants::{DB_NAME, EDITOR_DB};
 
@@ -20,7 +21,15 @@ pub struct CLI {
     cmd: CMD,
     args: Vec<String>
 }
+// Synopsis : 
+// tele [option] command [args]
 
+// Options: 
+/*
+    -e | --editor : editor to open directory in
+    -n | --name : to provide name
+    
+*/
 impl CLI {
     
     pub fn new(cli: Vec<String>) -> Result<Self, String> {
@@ -108,7 +117,6 @@ impl CLI {
             }
 
         }
-
 
         Ok(())
 
