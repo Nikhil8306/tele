@@ -6,20 +6,27 @@ mod config;
 mod command;
 mod constants;
 
-use std::env;
-use crate::command::Command;
-
+use std::{env, collections::HashMap};
+use crate::command::{Command, Opt};
 
 fn main() {
 
-    let args = env::args();
-    let args: Vec<String> = args.into_iter().collect();
+    let args = env::args(); // args
+    let args: Vec<String> = args.into_iter().collect(); // converting to string vector
 
-    let cli = CLI::new(args).unwrap();
-    let res = cli.run();
-    if res.is_err() {
-        println!("{}", res.unwrap_err());
-    }
+    // Test
 
-}   
- 
+
+}
+
+fn save(args: HashMap<String, String>) {
+
+    println!("Save Command Called");
+
+}
+
+fn ls(args: HashMap<String, String>) {
+
+    println!("LS command called");
+
+}
