@@ -3,11 +3,11 @@
 
 mod db;
 mod config;
-mod cli;
+mod command;
 mod constants;
 
 use std::env;
-use crate::cli::CLI;
+use crate::command::Command;
 
 
 fn main() {
