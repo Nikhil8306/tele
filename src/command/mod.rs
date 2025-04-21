@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, hash::Hash};
 
 pub struct Opt {
     name: String,
@@ -31,99 +31,158 @@ impl Opt {
         self
     } 
 }
-
-
-pub struct Command {
-    name: String,
-    subCommand: HashMap<String, Command>,
+struct Args{
     options: HashMap<String, Opt>,
-    argCount : Option<(i32, i32)>,
+    argCount: Option<(i32, i32)>,
     callBack: Option<fn(HashMap<String, String>, Vec<String>)>
 }
+
+impl Args {
+    fn new() -> Self{
+        return Self {
+            options: HashMap::new(),
+            argCount: None,
+            callBack: None
+        }
+    }
+}
+
+pub enum Command {
+    SubCommand (String, Vec<Command>),
+    Args (Args),
+}
+
 
 impl Command {
 
     pub fn new(app: String) -> Self{
-        return Self{
-            name: app,
-            subCommand: HashMap::new(),
-            options: HashMap::new(),
-            argCount : None,
-            callBack: None
-        }
+        
+        return Command::SubCommand(app, Vec::new());
+
     }
 
-    pub fn addSubCommand(&mut self, subcommand: Command) -> &mut Command{
+    pub fn addSubCommand(&mut self, mut subcommand: Command) -> &mut Command{
 
-        // If Options or arguments are there, don't add subcommands
-        if (self.options.len() > 0 || self.argCount.is_some()) {
-            panic!("Cannot add subcommand after arguments!!");
+        return match self{
+            Self::Args(_) => {
+                panic!("Cannot add subcommand after arguments");
+            }
+
+            Self::SubCommand(name, commands) => {
+                commands.push(subcommand);
+                let ind = commands.len()-1;
+
+                commands.get_mut(ind).unwrap()
+            }
+        };
+
+    }
+
+    fn addOptionUtil(arg: &mut Command, option: Opt) {
+        if let Command::Args(arg) = arg {
+            arg.options.insert(option.name.clone(), option);
         }
-
-        // There should be no need for this...
-        if (self.callBack.is_some()) {
-            panic!("Cannot add subcommand after callback");
-        }
-
-        if (self.subCommand.contains_key(&subcommand.name)) {
-            panic!("Command already present");
-        }
-
-        let subCommandName = subcommand.name.clone(); 
-        
-        if subCommandName.len() == 0 {
-            panic!("Provide a valid name");
-        }
-
-        if subCommandName.starts_with("-") {
-            panic!("Cannot have '-' in the beginning of a command name");
-        }
-
-
-        self.subCommand.insert(subCommandName, subcommand);
-
-        return self;
     }
 
     pub fn addOption(&mut self, option: Opt) -> &mut Command {
 
-        if (self.subCommand.len() > 0) {
-            panic!("SubCommands are there, cannot add options");
-        }
+        let c =  match self {
 
-        if (option.name.len() == 0) {
-            panic!("Provide a vaild name");
-        }
+            Command::SubCommand(_, commands) => {
+                
+                let mut arg = Args::new();
 
-        if (option.name.starts_with("-")) {
-            panic!("Cannot start name with '-'");
-        }
+                commands.push(Command::Args(arg));
+                let ind = commands.len()-1;
 
-        self.options.insert(option.name.clone(), option);
+                commands.get_mut(ind).unwrap()
+            }
 
-        return self;
-        
+            Command::Args(arg) => {
+
+                self
+            }
+
+        };
+
+        Self::addOptionUtil(c, option);
+
+        return c;
     }
 
-    pub fn addArgs(&mut self, start: i32, end: i32) -> &mut Command{
+    fn addArgsUtil(arg: &mut Command, start: i32, end: i32) {
+        if let Command::Args(arg) = arg {
+            arg.argCount = Some((start, end));
+        }
+    } 
 
-        if (self.subCommand.len() > 0) {
-            panic!("SubCommands are there, cannot add arguments");
+    pub fn addArgs(&mut self, min: i32, max: i32) -> &mut Command{
+
+        if min > max  {
+            panic!("Min count is greater than Max Count");
         }
 
-        self.argCount = Some((start, end));
+        let c =  match self {
 
-        return self;
+            Command::SubCommand(_, commands) => {
+                
+                let mut arg = Args::new();
 
+                commands.push(Command::Args(arg));
+                let ind = commands.len()-1;
+
+                commands.get_mut(ind).unwrap()
+            }
+
+            Command::Args(arg) => {
+
+                self
+            }
+
+        };
+
+        Self::addArgsUtil(c, min, max);
+
+        return c;
+
+    }
+
+    fn setCallBackUtil(arg: &mut Command, callback: fn(HashMap<String, String>, Vec<String>)) {
+        if let Command::Args(arg) = arg {
+            arg.callBack = Some(callback);
+        }
     }
 
     pub fn setCallBack(&mut self, callBack : fn(HashMap<String, String>, Vec<String>)) {
 
-        self.callBack = Some(callBack);
+        let c =  match self {
+
+            Command::SubCommand(_, commands) => {
+                
+                let mut arg = Args::new();
+
+                commands.push(Command::Args(arg));
+                let ind = commands.len()-1;
+
+                commands.get_mut(ind).unwrap()
+            }
+
+            Command::Args(arg) => {
+
+                self
+            }
+
+        };
+
+        Self::setCallBackUtil(c, callBack);
 
     }
 
 }   
+
+struct Err {
+    // Temp
+}
 
 impl Command {
 
@@ -150,10 +209,10 @@ impl Command {
 
     }
 
-    fn runUtil(&mut self, args: Vec<String>, ind: usize) -> bool {
+    fn runUtil(command: &Command, args: &Vec<String>, ind: usize) -> Result<(HashMap<String, Option<String>>, Vec<String>), Err> {
 
-        todo!("Matching the args");
-
+        todo!("");
+        
     }
 
     pub fn run(&mut self, args: Vec<String>) {
