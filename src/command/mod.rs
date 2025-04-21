@@ -1,187 +1,120 @@
-use std::{collections::HashMap, hash::Hash};
+mod option;
 
-pub struct Opt {
-    name: String,
-    notation: String,
-    takeValue: bool,
-    required: bool,
-}
+use std::collections::{HashMap, HashSet};
+use option::Opt;
+use crate::error::Error;
 
-impl Opt {
-    pub fn new(name: String, notation: String) -> Self{
-        return Self {
-            name,
-            notation,
-            takeValue: false,
-            required: false
-        };
-    }
-
-    pub fn takeValue(&mut self, shouldTake: bool) -> &mut Self {
-
-        self.takeValue = shouldTake;
-        
-        self
-    }
-
-    pub fn required(&mut self, isRequired: bool) -> &mut Self {
-
-        self. required = isRequired;
-
-        self
-    } 
-}
-struct Args{
+pub struct Args {
     options: HashMap<String, Opt>,
-    argCount: Option<(i32, i32)>,
-    callBack: Option<fn(HashMap<String, String>, Vec<String>)>
+    notations: HashMap<String, String>,
+    argCount: (i32, i32),
 }
 
 impl Args {
-    fn new() -> Self{
-        return Self {
+    pub fn new() -> Self {
+        Self{
             options: HashMap::new(),
-            argCount: None,
-            callBack: None
+            notations: HashMap::new(),
+            argCount: (0,0)
         }
+
+    }
+
+    pub fn addOption(&mut self, option: Opt) -> &mut Self {
+
+        let name = option.name.clone();
+        let notation = option.notation.clone();
+
+        if name.len() == 0 || name.starts_with("-") {
+            panic!("Invalid name for option");
+        }
+
+        if self.options.contains_key(&name) {
+            panic!("Option already configured");
+        }
+
+        if let Some(n) = notation {
+            if n.len() != 1 || n.starts_with("-"){
+                panic!("Invalid notation");
+            }
+
+            self.notations.insert(n, name.clone());
+            
+        }
+
+        self.options.insert(name, option);
+
+        self
+    }
+
+    pub fn addArgCount(&mut self, min: i32, max: i32) -> &mut Self {
+    
+        self.argCount = (min, max);
+
+        self
     }
 }
 
-pub enum Command {
-    SubCommand (String, Vec<Command>),
-    Args (Args),
-}
 
+pub struct Command {
+    subCommands: HashMap<String, Command>,
+    args: Option<Args>,
+    callBack: Option<fn(HashMap<String, Option<String>>, Vec<String>)>
+}
 
 impl Command {
 
-    pub fn new(app: String) -> Self{
+    pub fn new() -> Self {
+        Self {
+            subCommands: HashMap::new(),
+            args: None,
+            callBack: None
+        }
+    }
+
+
+    fn addSubCommand(&mut self, name: String, subCommand: Command) -> &mut Self {
+
+        if name.len() == 0 || name.starts_with("-") {
+            panic!("Invalid name for command");
+        }
+
+        if self.subCommands.contains_key(&name) {
+            panic!("Subcommand already configured");
+        }
+
+        self.subCommands.insert(name, subCommand);
+
+        self
+    }
+
+    fn addArgs(&mut self) -> &mut Args {
         
-        return Command::SubCommand(app, Vec::new());
-
-    }
-
-    pub fn addSubCommand(&mut self, mut subcommand: Command) -> &mut Command{
-
-        return match self{
-            Self::Args(_) => {
-                panic!("Cannot add subcommand after arguments");
-            }
-
-            Self::SubCommand(name, commands) => {
-                commands.push(subcommand);
-                let ind = commands.len()-1;
-
-                commands.get_mut(ind).unwrap()
-            }
-        };
-
-    }
-
-    fn addOptionUtil(arg: &mut Command, option: Opt) {
-        if let Command::Args(arg) = arg {
-            arg.options.insert(option.name.clone(), option);
-        }
-    }
-
-    pub fn addOption(&mut self, option: Opt) -> &mut Command {
-
-        let c =  match self {
-
-            Command::SubCommand(_, commands) => {
-                
-                let mut arg = Args::new();
-
-                commands.push(Command::Args(arg));
-                let ind = commands.len()-1;
-
-                commands.get_mut(ind).unwrap()
-            }
-
-            Command::Args(arg) => {
-
-                self
-            }
-
-        };
-
-        Self::addOptionUtil(c, option);
-
-        return c;
-    }
-
-    fn addArgsUtil(arg: &mut Command, start: i32, end: i32) {
-        if let Command::Args(arg) = arg {
-            arg.argCount = Some((start, end));
-        }
-    } 
-
-    pub fn addArgs(&mut self, min: i32, max: i32) -> &mut Command{
-
-        if min > max  {
-            panic!("Min count is greater than Max Count");
+        if let Some(_) = self.args {
+            panic!("Args already configured");
         }
 
-        let c =  match self {
+        self.args = Some(Args::new());
 
-            Command::SubCommand(_, commands) => {
-                
-                let mut arg = Args::new();
-
-                commands.push(Command::Args(arg));
-                let ind = commands.len()-1;
-
-                commands.get_mut(ind).unwrap()
+        return match &mut self.args {
+            Some(a) => {
+                a
             }
-
-            Command::Args(arg) => {
-
-                self
+            None => {
+                panic!("Something went wrong adding argument");
             }
-
-        };
-
-        Self::addArgsUtil(c, min, max);
-
-        return c;
-
-    }
-
-    fn setCallBackUtil(arg: &mut Command, callback: fn(HashMap<String, String>, Vec<String>)) {
-        if let Command::Args(arg) = arg {
-            arg.callBack = Some(callback);
         }
-    }
-
-    pub fn setCallBack(&mut self, callBack : fn(HashMap<String, String>, Vec<String>)) {
-
-        let c =  match self {
-
-            Command::SubCommand(_, commands) => {
-                
-                let mut arg = Args::new();
-
-                commands.push(Command::Args(arg));
-                let ind = commands.len()-1;
-
-                commands.get_mut(ind).unwrap()
-            }
-
-            Command::Args(arg) => {
-
-                self
-            }
-
-        };
-
-        Self::setCallBackUtil(c, callBack);
 
     }
 
-}   
+    fn setCallBack(&mut self, callBack: fn(HashMap<String, Option<String>>, Vec<String>)) -> &mut Self {
 
-struct Err {
-    // Temp
+        self.callBack = Some(callBack);
+
+        self
+
+    }
+
 }
 
 impl Command {
@@ -195,9 +128,10 @@ impl Command {
                 return Some(&arg[2..]);
             }
 
+            return None
         }
 
-        if (arg.len() > 1) {
+        if (arg.len() == 2) {
 
             if (chars[0] == '-') {
                 return Some(&arg[1..]);
@@ -209,15 +143,141 @@ impl Command {
 
     }
 
-    fn runUtil(command: &Command, args: &Vec<String>, ind: usize) -> Result<(HashMap<String, Option<String>>, Vec<String>), Err> {
+    fn checkRequired(options: &HashMap<String, Opt>, availOptions: &HashMap<String, Option<String>>) -> Option<String> {
 
-        todo!("");
-        
+        for (name, opt) in options {
+            if opt.required && !availOptions.contains_key(&opt.name){
+                return Some(name.to_string());
+            }
+        }
+
+        None
+
     }
 
-    pub fn run(&mut self, args: Vec<String>) {
-        
+    fn runUtil(command: &Command, tokens: &Vec<String>, ind: usize) -> Result<(), Error> {
 
+        if ind >= tokens.len() {
+
+            if command.callBack.is_none() {
+                return Err(Error{}); // TODO: Return too few arguments error
+            }
+
+            let map: HashMap<String, Option<String>> = HashMap::new();
+            let vc: Vec<String> = Vec::new();
+
+            let callBack = command.callBack.unwrap();
+
+            if let Some(args) = &command.args {
+                if let Some(Opt) = Self::checkRequired(&args.options, &HashMap::new()) {
+                    return Err(Error {  }); // TODO: return error particular options is required
+                }
+            }
+
+            callBack(HashMap::new(), Vec::new());
+
+            return Ok(());
+        }
+
+    
+
+        let option = Self::isOption(&tokens[ind]);
+
+        if let None = option {
+            if command.subCommands.contains_key(&tokens[ind]) {
+
+                return Self::runUtil(command.subCommands.get(&tokens[ind]).unwrap(), tokens, ind+1);
+
+            }
+        }
+
+
+        // if there are still tokens left and the args is none meaning there are extra unnecessary tokens
+        if command.args.is_none() { 
+            return Err(Error{}); // TODO: return too many arguments
+        }
+
+        let args = command.args.as_ref().unwrap();
+
+        let mut a: Vec<String> = Vec::new();
+        let mut o: HashMap<String, Option<String>> = HashMap::new();
+
+        let mut i = ind-1;
+        while i < tokens.len() {
+            i += 1;
+
+            let token = &tokens[i];
+            
+            if let Some(mut option) = Self::isOption(token)  {
+
+                // check if the option is in notation form
+                match args.notations.get(option) {
+                    Some(opt) => {
+                        option = opt;
+                    }
+
+                    None => {
+
+                    }
+                }
+
+
+                match args.options.get(option) {
+                    Some(opt) => {   
+                        
+                        if opt.takesValue {
+                            if i+1 >= tokens.len() {
+                                return Err(Error{}); // TODO: return error that no value for particular option
+                            }
+
+                            i += 1;
+                            o.insert(option.to_string(), Some(tokens[i].clone()));
+                        }
+
+                        else {
+                            o.insert(option.to_string(), None);
+                        }
+                    }
+
+                    None => {
+                        return Err(Error {  }) // TODO: return unknown options error
+                    }
+                }
+
+            }
+
+            else {
+
+                a.push(token.to_string());
+
+                if (a.len() as i32) > args.argCount.1 {
+                    return Err(Error {}) // TODO: return error too many arguments
+                }
+
+            }
+
+        }
+
+        if (a.len() as i32) < args.argCount.0 {
+            return Err(Error {  }) // TODO: return error too few arguments
+        }
+
+        if let Some(callBack) = command.callBack {
+            if let Some(opt) = Self::checkRequired(&args.options, &o) {
+                return Err(Error {  }); // TODO: return error particular argument is required
+            }
+
+            callBack(o, a);
+        }
+
+
+        Ok(())
+
+    }
+
+    pub fn run(&mut self, tokens: Vec<String>) -> Result<(), Error> {
+
+        return Self::runUtil(self, &tokens, 0);
 
     }
 

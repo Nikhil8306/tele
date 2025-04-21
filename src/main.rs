@@ -5,6 +5,7 @@ mod db;
 mod config;
 mod command;
 mod constants;
+mod error;
 
 use std::{env, collections::HashMap};
 use crate::command::{Command, Opt};
@@ -19,14 +20,3 @@ fn main() {
 
 }
 
-fn save(args: HashMap<String, String>) {
-
-    println!("Save Command Called");
-
-}
-
-fn ls(args: HashMap<String, String>) {
-
-    println!("LS command called");
-
-}
