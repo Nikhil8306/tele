@@ -1,5 +1,5 @@
 # Synopsis: 
- > **tele** [subcommand] [options] [args]
+ > **tele** [subcommands] [options] [args]
 
 # Desciption: 
 Save Directories under a name and open it in your favourite editor

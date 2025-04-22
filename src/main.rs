@@ -3,14 +3,12 @@
 
 mod db;
 mod config;
-mod command;
 mod constants;
-mod error;
 
 use std::{collections::HashMap, env, hash::Hash};
 use command::Args;
 
-use crate::command::{Command, option::Opt};
+use command::{Command, option::Opt};
 
 fn main() {
 
@@ -27,7 +25,10 @@ fn main() {
             .setCallBack(initCallBack)
         );
 
-    command.run(vec![String::from("tele"), String::from("init"), String::from("somethign"), String::from("-t"), String::from("tmepvalue"), String::from("Something12")]);
+    let res = command.run(vec![String::from("tele"), String::from("init"), String::from("--temp"), String::from("tempVal")]);
+    if res.is_err() {
+        println!("{:?}", res.unwrap_err());
+    }
 }
 
 fn pushCallBack(options: HashMap<String, Option<String>>, args: Vec<String>) {
