@@ -6,31 +6,31 @@ pub struct Opt {
 }
 
 impl Opt {
-    pub fn new(name: String) -> Self{
-        Self{
-            name,
+    pub fn new(name: &str) -> Box<Self>{
+        Box::new(Self{
+            name: name.to_string(),
             notation: None,
             takesValue: false,
             required:false
-        }
+        })
     }
 
-    pub fn notation(&mut self, n: String) -> &mut Self {
+    pub fn notation(mut self: Box<Self>, n: &str) -> Box<Self> {
 
-        self.notation = Some(n);
+        self.notation = Some(n.to_string());
 
         self
 
     }   
 
-    pub fn takesValue(&mut self, take: bool) -> &mut Self {
+    pub fn takesValue(mut self: Box<Self>, take: bool) -> Box<Self> {
         
         self.takesValue = take;
 
         self
     }
 
-    pub fn required(&mut self, isReq: bool) -> &mut Self {
+    pub fn required(mut self: Box<Self>, isReq: bool) -> Box<Self> {
 
         self.required = isReq;
 
