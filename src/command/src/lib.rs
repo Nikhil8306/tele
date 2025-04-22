@@ -1,8 +1,9 @@
 pub mod option;
+pub mod error;
 
 use std::collections::{HashMap, HashSet};
 use option::Opt;
-use crate::error::Error;
+use error::Error;
 
 pub struct Args {
     options: HashMap<String, Box<Opt>>,
