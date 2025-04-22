@@ -10,6 +10,7 @@ use command::Args;
 
 use command::{Command, option::Opt};
 
+
 fn main() {
 
     let args = env::args(); // args
@@ -17,28 +18,85 @@ fn main() {
 
     // Test
 
-    let command = 
+    let command = Command::new()
+        .addSubCommand("save",
         Command::new()
-        .addSubCommand("push", Command::new().setCallBack(pushCallBack))
-        .addSubCommand("init", Command::new() 
-            .addArgs(Args::new().setArgCount(0, 2).addOption(Opt::new("temp").notation("t").required(true).takesValue(true)))
-            .setCallBack(initCallBack)
+            .addArgs(Args::new()
+                .addOption(Opt::new("editor")
+                    .notation("e")
+                    .takesValue(true)
+                )
+                .addOption(Opt::new("name")
+                    .notation("n")
+                    .takesValue(true)
+                )
+                .addOption(Opt::new("dir")
+                    .notation("d")
+                    .takesValue(true)
+                )
+            )
+            .setCallBack(saveCallBack)
+        )
+        .addSubCommand("ls", 
+            Command::new()
+                .addArgs(Args::new()
+                    .addOption(Opt::new("dir")
+                        .takesValue(true)
+                        .notation("d")
+                    )
+                    .addOption(Opt::new("name")
+                        .takesValue(true)
+                        .notation("n")
+                    )
+                )
+                .setCallBack(lsCallback)
+        )
+        .addSubCommand("update", 
+            Command::new()
+                .addArgs(Args::new()
+                    .addOption(Opt::new("dir")
+                        .notation("d")
+                        .takesValue(true)
+                        .required(true)
+                    )
+
+                    .addOption(Opt::new("name")
+                        .notation("n")
+                        .takesValue(true)
+                        .required(true)
+                    )
+                )
+                .setCallBack(updateCallBack)
+        )
+        .addSubCommand("remove", 
+            Command::new()
+                .addArgs(Args::new().setArgCount(2, 2))
+                .setCallBack(removeCallBack)
+        )
+        .addSubCommand("init", 
+            Command::new()
+                .setCallBack(initCallBack)
         );
 
-    let res = command.run(vec![String::from("tele"), String::from("init"), String::from("--temp"), String::from("tempVal")]);
-    if res.is_err() {
-        println!("{:?}", res.unwrap_err());
-    }
+        command.run(args);
 }
 
-fn pushCallBack(options: HashMap<String, Option<String>>, args: Vec<String>) {
-    println!("THis is a push command");
+fn saveCallBack(options: HashMap<String, Option<String>>, args: Vec<String>) {
+    println!("Save {:?} {:?}", options, args);
+}
 
-    println!("{:?}, {:?}", options, args);
+fn updateCallBack(options: HashMap<String, Option<String>>, args: Vec<String>) {
+    println!("Update {:?} {:?}", options, args);
+}
+
+fn removeCallBack(options: HashMap<String, Option<String>>, args: Vec<String>) {
+    println!("Remove {:?} {:?}", options, args);
 }
 
 fn initCallBack(options: HashMap<String, Option<String>>, args: Vec<String>) {
-    println!("This is a init command");
+    println!("Init {:?} {:?}", options, args);
+}
 
-    println!("{:?}, {:?}", options, args);
+fn lsCallback(options: HashMap<String, Option<String>>, args: Vec<String>) {
+    println!("List {:?} {:?}", options, args);
 }

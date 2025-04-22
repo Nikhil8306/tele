@@ -1,7 +1,10 @@
+#[allow(non_snake_case)]
+#[allow(unused)]
+
 pub mod option;
 pub mod error;
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use option::Opt;
 use error::Error;
 
@@ -263,7 +266,7 @@ impl Command {
 
         }
 
-        if (a.len() as i32) < args.argCount.0 {
+        if (a.len() as i32) < args.argCount.0 { // TODO: not working
             return Err(Error::FewArgs)
         }
 
@@ -281,7 +284,7 @@ impl Command {
     }
 
     // Run parsing
-    pub fn run(mut self: Box<Self>, tokens: Vec<String>) -> Result<(), Error> {
+    pub fn run(self: Box<Self>, tokens: Vec<String>) -> Result<(), Error> {
 
         return Self::runUtil(self, &tokens, 1);
 

@@ -20,7 +20,7 @@ Save Directories under a name and open it in your favourite editor
         - `-d | --dir string`: for exlusively telling which directory to save other than current one
 
 - ## Remove: 
-    `rm | remove` command is used to delete the saved directory from tele database
+    `remove` command is used to delete the saved directory from tele database
 
 - ## Update: 
     `update` command is used to update the directory which is stored under some name
