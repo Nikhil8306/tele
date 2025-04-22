@@ -141,7 +141,7 @@ impl Command {
 
     }
 
-    fn checkRequired(options: &HashMap<String, Box<Opt>>, availOptions: &HashMap<String, Option<String>>) -> Option<String> {
+    fn missingRequired(options: &HashMap<String, Box<Opt>>, availOptions: &HashMap<String, Option<String>>) -> Option<String> {
 
         for (name, opt) in options {
             if opt.required && !availOptions.contains_key(&opt.name){
@@ -158,7 +158,7 @@ impl Command {
         if ind >= tokens.len() {
 
             if command.callBack.is_none() {
-                return Err(Error{}); // TODO: Return too few arguments error
+                return Err(Error::FewArgs);
             }
 
             let map: HashMap<String, Option<String>> = HashMap::new();
@@ -167,8 +167,8 @@ impl Command {
             let callBack = command.callBack.unwrap();
 
             if let Some(args) = command.args {
-                if let Some(Opt) = Self::checkRequired(&args.options, &HashMap::new()) {
-                    return Err(Error {  }); // TODO: return error particular options is required
+                if let Some(Opt) = Self::missingRequired(&args.options, &HashMap::new()) {
+                    return Err(Error::MissingOption(Opt));
                 }
             }
 
@@ -193,7 +193,7 @@ impl Command {
 
         // if there are still tokens left and the args is none meaning there are extra unnecessary tokens
         if command.args.is_none() { 
-            return Err(Error{}); // TODO: return too many arguments
+            return Err(Error::TooManyArgs);
         }
 
         let args = command.args.unwrap();
@@ -212,16 +212,13 @@ impl Command {
                 // check if the option is in notation form
                 let optionName = match option {
                     OptionType::FullName(name) => {
-                        if !args.options.contains_key(name) {
-                            return Err(Error{}); // TODO: return error unknown option
-                        }
 
                         name.to_string()
                     }
 
                     OptionType::Notation(name) => {
                         if !args.notations.contains_key(name) {
-                            return Err(Error {  }); // TODO; return error unknown option
+                            return Err(Error::UnknownOption(name.to_string()));
                         }
 
                         args.notations.get(name).unwrap().to_string()
@@ -234,7 +231,7 @@ impl Command {
                         
                         if opt.takesValue {
                             if i+1 >= tokens.len() {
-                                return Err(Error{}); // TODO: return error that no value for particular option
+                                return Err(Error::MissingValue(optionName));
                             }
 
                             i += 1;
@@ -247,7 +244,7 @@ impl Command {
                     }
 
                     None => {
-                        return Err(Error {  }) // TODO: return unknown options error
+                        return Err(Error::UnknownOption(optionName))
                     }
                 }
 
@@ -258,7 +255,7 @@ impl Command {
                 a.push(token.to_string());
 
                 if (a.len() as i32) > args.argCount.1 {
-                    return Err(Error {}) // TODO: return error too many arguments
+                    return Err(Error::TooManyArgs)
                 }
 
             }
@@ -266,12 +263,12 @@ impl Command {
         }
 
         if (a.len() as i32) < args.argCount.0 {
-            return Err(Error {  }) // TODO: return error too few arguments
+            return Err(Error::FewArgs)
         }
 
         if let Some(callBack) = command.callBack {
-            if let Some(opt) = Self::checkRequired(&args.options, &o) {
-                return Err(Error {  }); // TODO: return error particular argument is required
+            if let Some(opt) = Self::missingRequired(&args.options, &o) {
+                return Err(Error::MissingOption(opt));
             }
 
             callBack(o, a);
