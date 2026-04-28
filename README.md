@@ -1,4 +1,4 @@
-# 🚀 Tele: Navigate Your Projects with Ease
+#Tele: Navigate Your Projects with Ease
 
 Are you tired of getting lost in the maze of project directories, endlessly switching between folders? Say goodbye to the hassle! **Tele** is here to simplify your workflow and make project navigation a breeze.
 
